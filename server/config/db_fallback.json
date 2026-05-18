@@ -38,6 +38,32 @@
       "profile_image": "/default-avatar.png",
       "role": "user",
       "created_at": "2026-05-18T05:25:18.934Z"
+    },
+    {
+      "id": 4,
+      "full_name": "harsha vardhana",
+      "email": "harshasubhash123@gmail.com",
+      "password": "$2a$12$HoyYiowlGccVKh0ZmKo9IuWP4fC3.2UWJlsgcvF3pffmvWNM4bMGy",
+      "phone_number": "+919380268436",
+      "location": "bengaluru",
+      "age": 19,
+      "gender": "Male",
+      "profile_image": "/default-avatar.png",
+      "role": "user",
+      "created_at": "2026-05-18T06:08:27.728Z"
+    },
+    {
+      "id": 5,
+      "full_name": "harsha vardhana",
+      "email": "harshasubhash12@gmail.com",
+      "password": "$2a$12$jeecGUTHl6zLeOgYAjgE8O22Ni2mUp3C2azAU3eqwX82UudirEWhm",
+      "phone_number": "+919380268436",
+      "location": "karnataka",
+      "age": 19,
+      "gender": "Male",
+      "profile_image": "/default-avatar.png",
+      "role": "user",
+      "created_at": "2026-05-18T06:09:43.429Z"
     }
   ],
   "login_history": [],
@@ -101,6 +127,26 @@
       "complaint_status": "In Progress",
       "resolution_details": null,
       "created_at": "2026-05-18T05:27:53.901Z"
+    },
+    {
+      "id": 4,
+      "complaint_id": "CMP1001",
+      "user_id": 5,
+      "complaint_title": "car",
+      "complaint_description": "qwertyuioplkjhgfdsaazxcvbnm",
+      "complaint_category": "Other",
+      "complaint_location": "karnataka",
+      "complaint_image": null,
+      "name": "harsha vardhana",
+      "email": "harshasubhash12@gmail.com",
+      "phone_number": "+919380268436",
+      "age": 19,
+      "gender": "Male",
+      "emergency_level": "Medium",
+      "additional_notes": "knejkbj wleirfbiw4bg ewrbiw",
+      "complaint_status": "Pending",
+      "resolution_details": null,
+      "created_at": "2026-05-18T06:10:23.550Z"
     }
   ],
   "contact_messages": [],
