@@ -579,70 +579,141 @@ export default function AdminPortal() {
                           </tbody>
                         </table>
                       </div>
-                    )}
-
-                    {/* Status updater sub-panel overlay */}
+                            {/* Status updater sub-panel overlay */}
                     {editingComplaint && (
-                      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
+                      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 overflow-y-auto">
                         <motion.div
-                          initial={{ scale: 0.95 }}
-                          animate={{ scale: 1 }}
-                          className="w-full max-w-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-8 shadow-2xl space-y-6"
+                          initial={{ scale: 0.95, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          className="w-full max-w-4xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 md:p-8 shadow-2xl space-y-6"
                         >
-                          <h3 className="text-xl font-bold text-zinc-900 dark:text-white flex items-center gap-2">
-                            <ShieldCheck className="h-5 w-5 text-indigo-500" />
-                            Update Grievance: {editingComplaint.complaint_id}
-                          </h3>
+                          <div className="flex justify-between items-center border-b border-zinc-150 dark:border-zinc-800 pb-4">
+                            <h3 className="text-xl font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+                              <ShieldCheck className="h-5.5 w-5.5 text-indigo-500" />
+                              Filing Details & Resolution: {editingComplaint.complaint_id}
+                            </h3>
+                            <span className={`px-2.5 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider ${
+                              editingComplaint.emergency_level === 'Critical'
+                                ? 'bg-rose-500/10 text-rose-500'
+                                : editingComplaint.emergency_level === 'High'
+                                ? 'bg-amber-500/10 text-amber-500'
+                                : 'bg-indigo-500/10 text-indigo-500'
+                            }`}>
+                              {editingComplaint.emergency_level} Severity
+                            </span>
+                          </div>
 
-                          <form onSubmit={handleSaveStatus} className="space-y-4">
-                            {/* Choose status */}
-                            <div>
-                              <label className="block text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-2">New Status</label>
-                              <select
-                                value={newStatus}
-                                onChange={(e) => setNewStatus(e.target.value)}
-                                className="w-full rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 py-3.5 px-4 text-sm outline-none focus:border-indigo-500"
-                              >
-                                <option value="Pending">Pending</option>
-                                <option value="Under Review">Under Review</option>
-                                <option value="In Progress">In Progress</option>
-                                <option value="Resolved">Resolved</option>
-                                <option value="Rejected">Rejected</option>
-                              </select>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+                            
+                            {/* Left Column: Citizen & Grievance Details */}
+                            <div className="space-y-5">
+                              <div>
+                                <h4 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5">Citizen Information</h4>
+                                <div className="bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/40 dark:border-zinc-850 rounded-2xl p-4 space-y-2.5 text-xs text-zinc-700 dark:text-zinc-300">
+                                  <div className="flex justify-between"><span className="font-semibold">Name:</span> <span>{editingComplaint.name}</span></div>
+                                  <div className="flex justify-between"><span className="font-semibold">Email:</span> <span className="font-mono">{editingComplaint.email}</span></div>
+                                  <div className="flex justify-between"><span className="font-semibold">Phone:</span> <span>{editingComplaint.phone_number || 'N/A'}</span></div>
+                                  <div className="flex justify-between"><span className="font-semibold">Demographics:</span> <span>{editingComplaint.age ? `${editingComplaint.age} yrs` : 'N/A'} / {editingComplaint.gender}</span></div>
+                                </div>
+                              </div>
+
+                              <div>
+                                <h4 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5">Grievance Description</h4>
+                                <div className="bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/40 dark:border-zinc-850 rounded-2xl p-4 text-xs text-zinc-650 dark:text-zinc-350 leading-relaxed max-h-36 overflow-y-auto">
+                                  <span className="font-bold block text-zinc-800 dark:text-white mb-1.5">{editingComplaint.complaint_title}</span>
+                                  {editingComplaint.complaint_description}
+                                </div>
+                              </div>
+
+                              {editingComplaint.complaint_image && (
+                                <div>
+                                  <h4 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5">Evidence Snapshot</h4>
+                                  <div className="relative h-28 w-full rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-850">
+                                    <img
+                                      src={editingComplaint.complaint_image.startsWith('http') ? editingComplaint.complaint_image : `${apiUrl}${editingComplaint.complaint_image}`}
+                                      alt="Evidence snapshot"
+                                      className="h-full w-full object-cover cursor-pointer hover:scale-105 transition-all"
+                                      onClick={() => window.open(editingComplaint.complaint_image.startsWith('http') ? editingComplaint.complaint_image : `${apiUrl}${editingComplaint.complaint_image}`, '_blank')}
+                                    />
+                                  </div>
+                                </div>
+                              )}
                             </div>
 
-                            {/* Resolution Details */}
-                            <div>
-                              <label className="block text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-2">Resolution Details / Admin Notes</label>
-                              <textarea
-                                value={resolutionDetails}
-                                onChange={(e) => setResolutionDetails(e.target.value)}
-                                placeholder="Detail exact actions taken (e.g. Patch contractor dispatched and road re-asphalted. Verified by HSR Local ward inspectors)."
-                                rows={5}
-                                className="w-full rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 py-3.5 px-4 text-sm outline-none focus:border-indigo-500 resize-none"
-                              />
+                            {/* Right Column: GPS Location Map & Resolution Status Form */}
+                            <div className="space-y-5">
+                              {/* Location address and Google Map Plot */}
+                              <div>
+                                <h4 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5">Grievance Plot Location</h4>
+                                <div className="bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/40 dark:border-zinc-850 rounded-2xl p-3 text-xs text-zinc-700 dark:text-zinc-350 flex items-start gap-2 mb-3">
+                                  <span className="text-base">📍</span>
+                                  <span>{editingComplaint.complaint_location}</span>
+                                </div>
+                                <div className="rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-850 bg-zinc-100 dark:bg-zinc-950 h-44 shadow-inner">
+                                  <iframe
+                                    title="Admin Grievance Plot Map"
+                                    width="100%"
+                                    height="100%"
+                                    style={{ border: 0 }}
+                                    loading="lazy"
+                                    allowFullScreen
+                                    src={`https://maps.google.com/maps?q=${encodeURIComponent(editingComplaint.complaint_location)}&t=&z=14&ie=UTF8&iwloc=&output=embed`}
+                                  />
+                                </div>
+                              </div>
+
+                              {/* Form */}
+                              <form onSubmit={handleSaveStatus} className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div>
+                                    <label className="block text-[10px] font-bold text-zinc-450 uppercase tracking-wider mb-2">Update Status</label>
+                                    <select
+                                      value={newStatus}
+                                      onChange={(e) => setNewStatus(e.target.value)}
+                                      className="w-full rounded-2xl border border-zinc-200 dark:border-zinc-855 bg-white dark:bg-zinc-950/60 py-2.5 px-4 text-xs outline-none focus:border-indigo-500 font-bold"
+                                    >
+                                      <option value="Pending">Pending</option>
+                                      <option value="Under Review">Under Review</option>
+                                      <option value="In Progress">In Progress</option>
+                                      <option value="Resolved">Resolved</option>
+                                      <option value="Rejected">Rejected</option>
+                                    </select>
+                                  </div>
+                                  <div className="flex items-end gap-3 justify-end">
+                                    <button
+                                      type="button"
+                                      onClick={() => setEditingComplaint(null)}
+                                      className="rounded-2xl border border-zinc-200 dark:border-zinc-800 px-4 py-2.5 text-xs font-semibold text-zinc-700 dark:text-zinc-350 hover:bg-zinc-100 dark:hover:bg-zinc-955 transition-colors"
+                                    >
+                                      Close
+                                    </button>
+                                    <button
+                                      type="submit"
+                                      disabled={updatingStatus}
+                                      className="rounded-2xl bg-indigo-650 hover:bg-indigo-500 text-white font-bold py-2.5 px-4 text-xs shadow-md transition-colors disabled:opacity-50"
+                                    >
+                                      {updatingStatus ? 'Saving...' : 'Save Updates'}
+                                    </button>
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <label className="block text-[10px] font-bold text-zinc-450 uppercase tracking-wider mb-2">Resolution Details / Actions Taken</label>
+                                  <textarea
+                                    value={resolutionDetails}
+                                    onChange={(e) => setResolutionDetails(e.target.value)}
+                                    placeholder="Detail actions taken (e.g. Sanitation team dispatched to resolve the overflow). Citizens are informed automatically."
+                                    rows={3}
+                                    className="w-full rounded-2xl border border-zinc-200 dark:border-zinc-850 bg-white dark:bg-zinc-950 py-3.5 px-4 text-xs outline-none focus:border-indigo-500 resize-none leading-relaxed"
+                                  />
+                                </div>
+                              </form>
                             </div>
 
-                            <div className="flex gap-3 justify-end pt-3">
-                              <button
-                                type="button"
-                                onClick={() => setEditingComplaint(null)}
-                                className="rounded-2xl border border-zinc-200 dark:border-zinc-800 px-5 text-sm font-semibold text-zinc-700 dark:text-zinc-350"
-                              >
-                                Cancel
-                              </button>
-                              <button
-                                type="submit"
-                                disabled={updatingStatus}
-                                className="rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-5 text-sm transition-colors disabled:opacity-50"
-                              >
-                                {updatingStatus ? 'Saving...' : 'Save Updates'}
-                              </button>
-                            </div>
-                          </form>
+                          </div>
                         </motion.div>
                       </div>
-                    )}
+                    )}              )}
 
                   </div>
                 )}

@@ -193,6 +193,26 @@
       "complaint_status": "Pending",
       "resolution_details": null,
       "created_at": "2026-05-18T06:58:21.490Z"
+    },
+    {
+      "id": 6,
+      "complaint_id": "CMP1003",
+      "user_id": 7,
+      "complaint_title": "aofje",
+      "complaint_description": "weoij",
+      "complaint_category": "Road Damage",
+      "complaint_location": "Uttarahalli, Bengaluru South City Corporation, Bengaluru, Bangalore South, Bengaluru Urban, Karnataka, 560061, India",
+      "complaint_image": null,
+      "name": "harsha vardhana",
+      "email": "harshasubhash1222@gmail.com",
+      "phone_number": "+919380268436",
+      "age": 19,
+      "gender": "Male",
+      "emergency_level": "Medium",
+      "additional_notes": "won",
+      "complaint_status": "Pending",
+      "resolution_details": null,
+      "created_at": "2026-05-18T07:07:44.398Z"
     }
   ],
   "contact_messages": [],
