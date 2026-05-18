@@ -31,6 +31,10 @@ export default function SubmitComplaint() {
   const [suggesting, setSuggesting] = useState(false);
   const [successData, setSuccessData] = useState(null); // Holds CMPXXXX details on success
 
+  // Geolocation states
+  const [fetchingLoc, setFetchingLoc] = useState(false);
+  const [coordinates, setCoordinates] = useState(null);
+
   // Form states
   const [formData, setFormData] = useState({
     complaint_title: '',
@@ -48,6 +52,70 @@ export default function SubmitComplaint() {
   
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
+
+  // GPS Location Fetch and Reverse Geocoding
+  const handleFetchLocation = () => {
+    if (!navigator.geolocation) {
+      return toast.error('Geolocation is not supported by your browser.');
+    }
+
+    setFetchingLoc(true);
+    const geolocateToast = toast.loading('Querying device GPS and satellite positioning...');
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        setCoordinates({ lat: latitude, lng: longitude });
+
+        try {
+          // Use OpenStreetMap Nominatim API for reverse geocoding
+          const res = await axios.get(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
+            {
+              headers: {
+                'User-Agent': 'Complainsy-Client-App/1.0'
+              }
+            }
+          );
+
+          toast.dismiss(geolocateToast);
+
+          if (res.data && res.data.display_name) {
+            setFormData((prev) => ({
+              ...prev,
+              complaint_location: res.data.display_name
+            }));
+            toast.success('Current location fetched and reverse-geocoded successfully!');
+          } else {
+            setFormData((prev) => ({
+              ...prev,
+              complaint_location: `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`
+            }));
+            toast.success(`Location set to GPS coordinates: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`);
+          }
+        } catch (err) {
+          toast.dismiss(geolocateToast);
+          setFormData((prev) => ({
+            ...prev,
+            complaint_location: `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`
+          }));
+          toast.success(`Location set to GPS coordinates: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`);
+        } finally {
+          setFetchingLoc(false);
+        }
+      },
+      (error) => {
+        toast.dismiss(geolocateToast);
+        setFetchingLoc(false);
+        let errorMsg = 'Failed to retrieve location.';
+        if (error.code === 1) errorMsg = 'GPS location permission denied.';
+        else if (error.code === 2) errorMsg = 'Position unavailable.';
+        else if (error.code === 3) errorMsg = 'GPS request timed out.';
+        toast.error(errorMsg);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
 
   // Prefill details if user is logged in
   useEffect(() => {
@@ -333,9 +401,20 @@ export default function SubmitComplaint() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {/* Location */}
               <div>
-                <label className="block text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-2">
-                  {t('compLoc')} <span className="text-rose-500">*</span>
-                </label>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="block text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                    {t('compLoc')} <span className="text-rose-500">*</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleFetchLocation}
+                    disabled={fetchingLoc}
+                    className="flex items-center gap-1.5 text-[10px] font-extrabold text-indigo-650 dark:text-indigo-400 uppercase tracking-wider hover:opacity-85 disabled:opacity-50 transition-opacity"
+                  >
+                    <MapPin className="h-3.5 w-3.5" />
+                    {fetchingLoc ? 'Fetching GPS...' : '📍 Use GPS Location'}
+                  </button>
+                </div>
                 <div className="relative">
                   <MapPin className="absolute left-4 top-3.5 h-5 w-5 text-zinc-400" />
                   <input
@@ -368,6 +447,37 @@ export default function SubmitComplaint() {
                 </select>
               </div>
             </div>
+
+            {/* Dynamic Map Embed */}
+            {coordinates && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-850 bg-zinc-50 dark:bg-zinc-950 p-1 mt-2 shadow-inner"
+              >
+                <div className="text-[10px] font-bold text-zinc-450 uppercase tracking-wider px-3 py-2.5 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5 text-zinc-500 dark:text-zinc-400">
+                    🗺️ Plotted Grievance Coordinates: {coordinates.lat.toFixed(5)}, {coordinates.lng.toFixed(5)}
+                  </span>
+                  <button 
+                    type="button" 
+                    onClick={() => setCoordinates(null)} 
+                    className="text-rose-500 hover:opacity-80 font-extrabold"
+                  >
+                    Remove Map
+                  </button>
+                </div>
+                <iframe
+                  title="Grievance Map Plot"
+                  width="100%"
+                  height="220"
+                  style={{ border: 0, borderRadius: '14px' }}
+                  loading="lazy"
+                  allowFullScreen
+                  src={`https://maps.google.com/maps?q=${coordinates.lat},${coordinates.lng}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
+                />
+              </motion.div>
+            )}
 
             {/* Upload Complaint Image */}
             <div>
