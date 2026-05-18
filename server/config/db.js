@@ -180,21 +180,27 @@ async function queryEmulator(sql, params = []) {
   }
 
   // 3. SELECT FROM users BY email
-  if (sqlClean.match(/SELECT \* FROM users WHERE email = \?/i)) {
+  if (sqlClean.match(/FROM users WHERE email = \?/i)) {
     const email = params[0];
     const user = db.users.find(u => u.email.toLowerCase() === email.toLowerCase());
     return [user ? [user] : []];
   }
 
   // 4. SELECT FROM users BY id
-  if (sqlClean.match(/SELECT \* FROM users WHERE id = \?/i)) {
+  if (sqlClean.match(/FROM users WHERE id = \?/i)) {
     const id = parseInt(params[0]);
     const user = db.users.find(u => u.id === id);
     return [user ? [user] : []];
   }
 
   // 5. SELECT ALL FROM users
-  if (sqlClean.match(/SELECT \* FROM users ORDER BY/i) || sqlClean.match(/SELECT \* FROM users/i)) {
+  if (sqlClean.match(/FROM users/i)) {
+    if (sqlClean.match(/role\s*=\s*['"]user['"]/i)) {
+      return [db.users.filter(u => u.role === 'user')];
+    }
+    if (sqlClean.match(/role\s*=\s*['"]admin['"]/i)) {
+      return [db.users.filter(u => u.role === 'admin')];
+    }
     return [db.users];
   }
 
@@ -328,21 +334,26 @@ async function queryEmulator(sql, params = []) {
   }
 
   // 11. SELECT FROM complaints BY ID (CMP100X)
-  if (sqlClean.match(/SELECT \* FROM complaints WHERE complaint_id = \?/i)) {
+  if (sqlClean.match(/FROM complaints WHERE complaint_id = \?/i)) {
     const cmpId = params[0];
     const complaint = db.complaints.find(c => c.complaint_id.toUpperCase() === cmpId.toUpperCase());
     return [complaint ? [complaint] : []];
   }
 
   // 12. SELECT FROM complaints BY email
-  if (sqlClean.match(/SELECT \* FROM complaints WHERE email = \?/i)) {
+  if (sqlClean.match(/FROM complaints WHERE email = \?/i)) {
     const email = params[0];
     const filtered = db.complaints.filter(c => c.email.toLowerCase() === email.toLowerCase());
     return [filtered];
   }
 
   // 13. SELECT ALL complaints or filtered
-  if (sqlClean.match(/SELECT \* FROM complaints ORDER BY/i) || sqlClean.match(/SELECT \* FROM complaints/i)) {
+  if (sqlClean.match(/FROM complaints/i)) {
+    if (sqlClean.match(/WHERE id = \?/i)) {
+      const id = parseInt(params[0]);
+      const complaint = db.complaints.find(c => c.id === id);
+      return [complaint ? [complaint] : []];
+    }
     return [db.complaints.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))];
   }
 

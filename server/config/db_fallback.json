@@ -64,6 +64,19 @@
       "profile_image": "/default-avatar.png",
       "role": "user",
       "created_at": "2026-05-18T06:09:43.429Z"
+    },
+    {
+      "id": 6,
+      "full_name": "harsha",
+      "email": "harshasubhash1244@gmail.com",
+      "password": "$2a$12$fRpeZDlgV9Fz7yzMuobBD.c0bdC4PAjb9vMIziAZ6rUi6OhmTGWE2",
+      "phone_number": "123456789",
+      "location": "karnataka",
+      "age": 19,
+      "gender": "Male",
+      "profile_image": "/default-avatar.png",
+      "role": "user",
+      "created_at": "2026-05-18T06:15:08.485Z"
     }
   ],
   "login_history": [],
