@@ -217,9 +217,15 @@ const translations = {
   }
 };
 
-const LanguageContext = createContext();
+interface LanguageContextType {
+  lang: string;
+  toggleLanguage: () => void;
+  t: (key: string) => string;
+}
 
-export function LanguageProvider({ children }) {
+const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
+
+export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [lang, setLang] = useState('en');
 
   // Load language preference from local storage
@@ -236,8 +242,8 @@ export function LanguageProvider({ children }) {
     localStorage.setItem('complainsy_lang', nextLang);
   };
 
-  const t = (key) => {
-    return translations[lang][key] || translations['en'][key] || key;
+  const t = (key: string) => {
+    return translations[lang as 'en' | 'kn'][key as keyof typeof translations['en']] || translations['en'][key as keyof typeof translations['en']] || key;
   };
 
   return (
@@ -247,4 +253,10 @@ export function LanguageProvider({ children }) {
   );
 }
 
-export const useLanguage = () => useContext(LanguageContext);
+export const useLanguage = () => {
+  const context = useContext(LanguageContext);
+  if (!context) {
+    throw new Error('useLanguage must be used within a LanguageProvider');
+  }
+  return context;
+};

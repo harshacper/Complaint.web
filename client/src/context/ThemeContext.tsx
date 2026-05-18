@@ -2,9 +2,14 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-const ThemeContext = createContext();
+interface ThemeContextType {
+  theme: string;
+  toggleTheme: () => void;
+}
 
-export function ThemeProvider({ children }) {
+const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState('dark'); // Default to beautiful dark mode!
 
   useEffect(() => {
@@ -21,7 +26,7 @@ export function ThemeProvider({ children }) {
     }
   }, []);
 
-  const updateDocument = (themeMode) => {
+  const updateDocument = (themeMode: string) => {
     const root = window.document.documentElement;
     if (themeMode === 'dark') {
       root.classList.add('dark');
@@ -46,4 +51,10 @@ export function ThemeProvider({ children }) {
   );
 }
 
-export const useTheme = () => useContext(ThemeContext);
+export const useTheme = () => {
+  const context = useContext(ThemeContext);
+  if (!context) {
+    throw new Error('useTheme must be used within a ThemeProvider');
+  }
+  return context;
+};

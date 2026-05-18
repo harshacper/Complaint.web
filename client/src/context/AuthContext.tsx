@@ -6,9 +6,25 @@ import { useRouter } from 'next/navigation';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
-const AuthContext = createContext();
+interface AuthContextType {
+  user: any;
+  admin: any;
+  loading: boolean;
+  register: (formData: any) => Promise<{ success: boolean; message: string }>;
+  login: (email: string, password: string) => Promise<{ success: boolean; message: string }>;
+  googleLogin: (profile: any) => Promise<{ success: boolean; message: string }>;
+  updateProfile: (profileData: any) => Promise<{ success: boolean; message: string }>;
+  adminLogin: (email: string, password: string) => Promise<{ success: boolean; message: string }>;
+  logout: () => void;
+  adminLogout: () => void;
+  isUserAuthenticated: boolean;
+  isAdminAuthenticated: boolean;
+  apiUrl: string;
+}
 
-export function AuthProvider({ children }) {
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState(null);
   const [admin, setAdmin] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -188,4 +204,10 @@ export function AuthProvider({ children }) {
   );
 }
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
