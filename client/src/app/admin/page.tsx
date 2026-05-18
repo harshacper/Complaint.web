@@ -579,7 +579,9 @@ export default function AdminPortal() {
                           </tbody>
                         </table>
                       </div>
-                            {/* Status updater sub-panel overlay */}
+                    )}
+
+                    {/* Status updater sub-panel overlay */}
                     {editingComplaint && (
                       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 overflow-y-auto">
                         <motion.div
@@ -713,7 +715,7 @@ export default function AdminPortal() {
                           </div>
                         </motion.div>
                       </div>
-                    )}              )}
+                    )}
 
                   </div>
                 )}
