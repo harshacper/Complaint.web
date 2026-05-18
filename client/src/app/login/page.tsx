@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -8,7 +8,7 @@ import { toast } from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShieldCheck, Mail, Lock, User, Phone, MapPin, Calendar, Users, Eye, EyeOff, Sparkles, KeyRound } from 'lucide-react';
 
-export default function AuthPage() {
+function AuthContent() {
   const { login, register, googleLogin, user, isUserAuthenticated } = useAuth();
   const { t } = useLanguage();
   const router = useRouter();
@@ -467,5 +467,18 @@ export default function AuthPage() {
         </AnimatePresence>
       </motion.div>
     </div>
+  );
+}
+
+export default function AuthPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex-grow py-16 px-4 bg-zinc-50 dark:bg-zinc-950 flex flex-col items-center justify-center text-zinc-500 min-h-[60vh]">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent mb-4" />
+        <span className="text-sm font-semibold">Initializing Secure Auth Options...</span>
+      </div>
+    }>
+      <AuthContent />
+    </Suspense>
   );
 }

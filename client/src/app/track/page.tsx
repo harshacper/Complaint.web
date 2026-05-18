@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
@@ -11,7 +11,7 @@ import { Search, MapPin, Calendar, Tag, ShieldCheck, Clock, FileText, AlertTrian
 
 const statusSteps = ['Pending', 'Under Review', 'In Progress', 'Resolved'];
 
-export default function TrackComplaint() {
+function TrackComplaintContent() {
   const { t } = useLanguage();
   const { apiUrl } = useAuth();
   const searchParams = useSearchParams();
@@ -309,5 +309,18 @@ export default function TrackComplaint() {
       </div>
 
     </div>
+  );
+}
+
+export default function TrackComplaint() {
+  return (
+    <Suspense fallback={
+      <div className="flex-grow py-16 px-4 bg-zinc-50 dark:bg-zinc-950 flex flex-col items-center justify-center text-zinc-500 min-h-[60vh]">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent mb-4" />
+        <span className="text-sm font-semibold">Initializing Tracking Registry...</span>
+      </div>
+    }>
+      <TrackComplaintContent />
+    </Suspense>
   );
 }
