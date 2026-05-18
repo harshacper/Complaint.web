@@ -787,15 +787,8 @@ export default function AdminPortal() {
                             {users.map(u => (
                               <tr key={u.id} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-900/30 transition-colors">
                                 <td className="px-6 py-4 font-bold text-zinc-850 dark:text-white flex items-center gap-2">
-                                  <div className="h-6 w-6 rounded-full overflow-hidden border border-indigo-500/20">
-                                    <img
-                                      src={u.profile_image}
-                                      alt="Avatar"
-                                      className="h-full w-full object-cover"
-                                      onError={(e) => {
-                                        e.target.src = 'https://api.dicebear.com/7.x/bottts/svg?seed=' + u.email;
-                                      }}
-                                    />
+                                  <div className="h-6 w-6 rounded-full flex items-center justify-center bg-indigo-500/10 dark:bg-indigo-400/10 text-indigo-600 dark:text-indigo-400 font-extrabold text-[10px] uppercase border border-indigo-500/20 shadow-sm shrink-0">
+                                    {u.full_name ? u.full_name.charAt(0) : 'U'}
                                   </div>
                                   {u.full_name}
                                   {u.role === 'admin' && (

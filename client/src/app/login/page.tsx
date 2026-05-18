@@ -97,7 +97,7 @@ function AuthContent() {
       const mockProfile = {
         email: isRegister ? 'google_new_citizen@gmail.com' : 'user@complainsy.com',
         name: isRegister ? 'Google Citizen User' : 'Harsha Vardhana',
-        imageUrl: 'https://api.dicebear.com/7.x/adventurer/svg?seed=google_user'
+        imageUrl: '/default-avatar.png'
       };
 
       const res = await googleLogin(mockProfile);

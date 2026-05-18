@@ -123,15 +123,8 @@ export default function Navbar() {
             ) : isUserAuthenticated ? (
               <div className="flex items-center gap-3 bg-zinc-100 dark:bg-zinc-900 px-3 py-1.5 rounded-2xl border border-zinc-200/50 dark:border-zinc-800/50">
                 <Link href="/dashboard" className="flex items-center gap-2">
-                  <div className="h-6 w-6 rounded-full overflow-hidden border border-indigo-500/30">
-                    <img
-                      src={user?.profile_image || '/default-avatar.png'}
-                      alt="User Avatar"
-                      className="h-full w-full object-cover"
-                      onError={(e) => {
-                        e.target.src = 'https://api.dicebear.com/7.x/bottts/svg?seed=' + user?.email;
-                      }}
-                    />
+                  <div className="h-6 w-6 rounded-full flex items-center justify-center bg-indigo-500/10 dark:bg-indigo-400/10 text-indigo-650 dark:text-indigo-400 font-extrabold text-[10px] uppercase border border-indigo-500/25 shadow-sm shrink-0">
+                    {user?.full_name ? user.full_name.charAt(0) : 'U'}
                   </div>
                   <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 max-w-[100px] truncate">
                     {user?.full_name.split(' ')[0]}
@@ -245,15 +238,8 @@ export default function Navbar() {
             ) : isUserAuthenticated ? (
               <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-3 px-3 py-2">
-                  <div className="h-8 w-8 rounded-full overflow-hidden border border-indigo-500/30">
-                    <img
-                      src={user?.profile_image || '/default-avatar.png'}
-                      alt="User Avatar"
-                      className="h-full w-full object-cover"
-                      onError={(e) => {
-                        e.target.src = 'https://api.dicebear.com/7.x/bottts/svg?seed=' + user?.email;
-                      }}
-                    />
+                  <div className="h-8 w-8 rounded-full flex items-center justify-center bg-indigo-500/10 dark:bg-indigo-400/10 text-indigo-650 dark:text-indigo-400 font-extrabold text-xs uppercase border border-indigo-500/25 shadow-sm shrink-0">
+                    {user?.full_name ? user.full_name.charAt(0) : 'U'}
                   </div>
                   <div className="flex flex-col">
                     <span className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">

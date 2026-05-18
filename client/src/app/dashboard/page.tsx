@@ -127,16 +127,8 @@ export default function UserDashboard() {
         {/* Citizen Overview Header */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-6 bg-white/70 dark:bg-zinc-900/60 backdrop-blur-md border border-zinc-200/50 dark:border-zinc-800/50 rounded-3xl p-6 shadow-xl">
           <div className="flex items-center gap-4">
-            {/* User Avatar */}
-            <div className="h-16 w-16 rounded-3xl overflow-hidden border border-indigo-500/20 shadow-md">
-              <img
-                src={user?.profile_image || '/default-avatar.png'}
-                alt="Avatar"
-                className="h-full w-full object-cover"
-                onError={(e) => {
-                  e.target.src = 'https://api.dicebear.com/7.x/bottts/svg?seed=' + user?.email;
-                }}
-              />
+            <div className="h-16 w-16 rounded-3xl flex items-center justify-center bg-indigo-500/10 dark:bg-indigo-400/10 text-indigo-650 dark:text-indigo-400 font-extrabold text-2xl uppercase border border-indigo-500/25 shadow-sm shrink-0">
+              {user?.full_name ? user.full_name.charAt(0) : 'U'}
             </div>
             <div>
               <h1 className="text-xl sm:text-2xl font-extrabold text-zinc-900 dark:text-white">
