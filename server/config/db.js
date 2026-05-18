@@ -399,6 +399,20 @@ async function queryEmulator(sql, params = []) {
     return [{ insertId: newMessage.id }];
   }
 
+  // 17. SELECT ALL contact_messages
+  if (sqlClean.match(/FROM contact_messages/i)) {
+    return [db.contact_messages.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))];
+  }
+
+  // 18. DELETE FROM contact_messages BY id
+  if (sqlClean.match(/DELETE FROM contact_messages WHERE id = \?/i)) {
+    const id = parseInt(params[0]);
+    const originalLen = db.contact_messages.length;
+    db.contact_messages = db.contact_messages.filter(m => m.id !== id);
+    writeJsonDb(db);
+    return [{ affectedRows: originalLen - db.contact_messages.length }];
+  }
+
   // Default fallback for any unhandled mock queries
   return [[]];
 }

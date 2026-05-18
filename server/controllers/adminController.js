@@ -278,3 +278,33 @@ exports.getAnalytics = async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error while compiling analytics data' });
   }
 };
+
+// 7. Get All Contact Messages
+exports.getAllContactMessages = async (req, res) => {
+  try {
+    const [messages] = await db.query('SELECT * FROM contact_messages');
+    res.status(200).json({
+      success: true,
+      count: messages.length,
+      messages
+    });
+  } catch (error) {
+    console.error('Admin Get Contact Messages Error:', error);
+    res.status(500).json({ success: false, message: 'Server error while fetching contact messages' });
+  }
+};
+
+// 8. Delete Contact Message
+exports.deleteContactMessage = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await db.query('DELETE FROM contact_messages WHERE id = ?', [id]);
+    res.status(200).json({
+      success: true,
+      message: 'Contact message deleted successfully'
+    });
+  } catch (error) {
+    console.error('Admin Delete Contact Message Error:', error);
+    res.status(500).json({ success: false, message: 'Server error while deleting contact message' });
+  }
+};

@@ -30,9 +30,10 @@ export default function AdminPortal() {
   const [activeTab, setActiveTab] = useState('analytics'); // analytics | complaints | users
   const [mounted, setMounted] = useState(false);
 
-  // Complaints & Users states
+  // Complaints, Users & Contact messages states
   const [complaints, setComplaints] = useState([]);
   const [users, setUsers] = useState([]);
+  const [contacts, setContacts] = useState([]);
   const [analytics, setAnalytics] = useState(null);
   const [loadingGrid, setLoadingGrid] = useState(true);
 
@@ -91,6 +92,12 @@ export default function AdminPortal() {
       const analyticsRes = await axios.get(`${apiUrl}/admin/analytics`, { headers });
       if (analyticsRes.data.success) {
         setAnalytics(analyticsRes.data.analytics);
+      }
+
+      // 4. Fetch contact messages
+      const contactsRes = await axios.get(`${apiUrl}/admin/contacts`, { headers });
+      if (contactsRes.data.success) {
+        setContacts(contactsRes.data.messages);
       }
 
     } catch (err) {
@@ -183,6 +190,32 @@ export default function AdminPortal() {
         fetchAdminData(); // Refresh grid
       } else {
         toast.error('Failed to delete complaint.');
+      }
+    } catch (err) {
+      toast.dismiss(deletingToast);
+      toast.error('Connection failed, delete aborted.');
+    }
+  };
+
+  // Delete Contact message
+  const handleDeleteContact = async (id) => {
+    if (!window.confirm('Are you sure you want to permanently delete this contact inquiry?')) {
+      return;
+    }
+
+    const deletingToast = toast.loading('Purging inquiry records...');
+    try {
+      const adminToken = localStorage.getItem('complainsy_admin_token');
+      const res = await axios.delete(`${apiUrl}/admin/contacts/${id}`, {
+        headers: { Authorization: `Bearer ${adminToken}` }
+      });
+      toast.dismiss(deletingToast);
+
+      if (res.data.success) {
+        toast.success('Inquiry removed successfully.');
+        fetchAdminData(); // Refresh grid
+      } else {
+        toast.error('Failed to delete inquiry.');
       }
     } catch (err) {
       toast.dismiss(deletingToast);
@@ -352,7 +385,8 @@ export default function AdminPortal() {
                 {[
                   { id: 'analytics', name: 'Dashboard Analytics', icon: BarChart3 },
                   { id: 'complaints', name: 'Manage Complaints', icon: ShieldAlert },
-                  { id: 'users', name: 'Registered Citizens', icon: Users }
+                  { id: 'users', name: 'Registered Citizens', icon: Users },
+                  { id: 'contacts', name: 'Citizen Inquiries', icon: Mail }
                 ].map(tab => (
                   <button
                     key={tab.id}
@@ -773,6 +807,62 @@ export default function AdminPortal() {
                                 <td className="px-6 py-4 max-w-[120px] truncate">{u.location || 'N/A'}</td>
                                 <td className="px-6 py-4">{u.age || 'N/A'} yrs / {u.gender}</td>
                                 <td className="px-6 py-4">{new Date(u.created_at).toLocaleDateString()}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+
+                  </div>
+                )}
+
+                {/* 4. CITIZEN INQUIRIES TAB */}
+                {activeTab === 'contacts' && (
+                  <div className="space-y-6">
+                    <div className="border-b border-zinc-100 dark:border-zinc-850 pb-4">
+                      <h2 className="text-xl font-bold text-zinc-900 dark:text-white">Citizen Contact Inquiries</h2>
+                      <p className="text-xs text-zinc-400">View message inquiries, citizen feedback, and contact details.</p>
+                    </div>
+
+                    {loadingGrid ? (
+                      <div className="flex justify-center py-10">
+                        <div className="h-6 w-6 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent" />
+                      </div>
+                    ) : contacts.length === 0 ? (
+                      <div className="text-center py-16 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-2xl text-zinc-400">
+                        No contact inquiries found.
+                      </div>
+                    ) : (
+                      <div className="overflow-x-auto border border-zinc-200 dark:border-zinc-850 rounded-2xl">
+                        <table className="min-w-full divide-y divide-zinc-200 dark:divide-zinc-850 text-left text-xs">
+                          <thead className="bg-zinc-50 dark:bg-zinc-950 font-extrabold text-zinc-450 uppercase tracking-wider">
+                            <tr>
+                              <th className="px-6 py-4">Name</th>
+                              <th className="px-6 py-4">Email</th>
+                              <th className="px-6 py-4">Subject</th>
+                              <th className="px-6 py-4">Message</th>
+                              <th className="px-6 py-4">Received Date</th>
+                              <th className="px-6 py-4 text-right">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-zinc-200 dark:divide-zinc-850 bg-white/20 dark:bg-zinc-900/10">
+                            {contacts.map(m => (
+                              <tr key={m.id} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-900/30 transition-colors">
+                                <td className="px-6 py-4 font-bold text-zinc-850 dark:text-white">{m.name}</td>
+                                <td className="px-6 py-4 font-mono">{m.email}</td>
+                                <td className="px-6 py-4 font-bold text-indigo-600 dark:text-indigo-400">{m.subject}</td>
+                                <td className="px-6 py-4 max-w-[240px] whitespace-pre-wrap leading-relaxed">{m.message}</td>
+                                <td className="px-6 py-4">{new Date(m.created_at || new Date()).toLocaleString()}</td>
+                                <td className="px-6 py-4 text-right">
+                                  <button
+                                    onClick={() => handleDeleteContact(m.id)}
+                                    className="p-1.5 text-zinc-400 hover:text-rose-500 transition-colors"
+                                    title="Delete Message"
+                                  >
+                                    <Trash2 className="h-4.5 w-4.5" />
+                                  </button>
+                                </td>
                               </tr>
                             ))}
                           </tbody>

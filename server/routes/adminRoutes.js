@@ -21,5 +21,7 @@ router.put('/complaints/:id/status', authMiddleware, isAdmin, adminController.up
 router.delete('/complaints/:id', authMiddleware, isAdmin, adminController.deleteComplaint);
 router.get('/users', authMiddleware, isAdmin, adminController.getAllUsers);
 router.get('/analytics', authMiddleware, isAdmin, adminController.getAnalytics);
+router.get('/contacts', authMiddleware, isAdmin, adminController.getAllContactMessages);
+router.delete('/contacts/:id', authMiddleware, isAdmin, adminController.deleteContactMessage);
 
 module.exports = router;
