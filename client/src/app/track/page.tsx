@@ -248,7 +248,7 @@ export default function TrackComplaint() {
                       <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">Supporting Evidence Photo</span>
                       <div className="relative h-44 w-full rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 shadow-sm">
                         <img
-                          src={`http://localhost:5000${complaint.complaint_image}`}
+                          src={`${apiUrl.replace('/api', '')}${complaint.complaint_image}`}
                           alt="Filing Evidence"
                           className="h-full w-full object-cover hover:scale-105 transition-transform duration-500"
                         />
