@@ -1,0 +1,35 @@
+# Dependency folders
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# Next.js build and cache outputs
+.next/
+client/.next/
+client/out/
+
+# Local configuration files
+.env
+server/.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Operating System files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Uploaded evidence image outputs (prevent bloating git repo)
+server/uploads/*
+!server/uploads/.gitkeep

@@ -1,0 +1,117 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "full_name": "System Admin",
+      "email": "harsha@gmail.com",
+      "password": "$2a$10$hM9ojfe9GORQo6qdi/Tax.eWuaEzS/K9X8P4sEVE.IrkocqVS6rcK",
+      "phone_number": "9876543210",
+      "location": "Bengaluru, Karnataka",
+      "age": 30,
+      "gender": "Male",
+      "profile_image": "/default-avatar.png",
+      "role": "admin",
+      "created_at": "2026-05-18T05:06:51.394Z"
+    },
+    {
+      "id": 2,
+      "full_name": "Harsha Vardhana",
+      "email": "user@complainsy.com",
+      "password": "$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQyCgOfKNWCCMimBq4bW5TIQK",
+      "phone_number": "9876543211",
+      "location": "Bengaluru, Karnataka",
+      "age": 23,
+      "gender": "Male",
+      "profile_image": "/default-avatar.png",
+      "role": "user",
+      "created_at": "2026-05-18T05:06:51.395Z"
+    },
+    {
+      "id": 3,
+      "full_name": "harsha vardhana",
+      "email": "harsha8453@gmail.com",
+      "password": "$2a$12$amWxiemUtGwgS3tx0KUJ6.gdYmi0nATXbcfM7EuXNkZt0OFDluxaO",
+      "phone_number": "+919380268436",
+      "location": "karnataka",
+      "age": 19,
+      "gender": "Male",
+      "profile_image": "/default-avatar.png",
+      "role": "user",
+      "created_at": "2026-05-18T05:25:18.934Z"
+    }
+  ],
+  "login_history": [],
+  "complaints": [
+    {
+      "id": 1,
+      "complaint_id": "CMP1001",
+      "user_id": 2,
+      "complaint_title": "Major Pothole on Outer Ring Road",
+      "complaint_description": "There is a huge pothole near the Silk Board junction causing massive traffic jams and potential accidents. Please patch this immediately.",
+      "complaint_category": "Road Damage",
+      "complaint_location": "Outer Ring Road, Silk Board, Bengaluru",
+      "complaint_image": null,
+      "name": "Harsha Vardhana",
+      "email": "user@complainsy.com",
+      "phone_number": "9876543211",
+      "age": 23,
+      "gender": "Male",
+      "emergency_level": "High",
+      "additional_notes": "Urgent action required as monsoon is starting.",
+      "complaint_status": "In Progress",
+      "resolution_details": null,
+      "created_at": "2026-05-15T05:06:51.395Z"
+    },
+    {
+      "id": 2,
+      "complaint_id": "CMP1002",
+      "user_id": 2,
+      "complaint_title": "Uncollected Garbage in HSR Layout Sector 3",
+      "complaint_description": "Garbage has not been collected for the past 5 days. It is piling up near the park and producing a terrible smell. Stray dogs are scattering it.",
+      "complaint_category": "Garbage Problem",
+      "complaint_location": "14th Cross, Sector 3, HSR Layout, Bengaluru",
+      "complaint_image": null,
+      "name": "Harsha Vardhana",
+      "email": "user@complainsy.com",
+      "phone_number": "9876543211",
+      "age": 23,
+      "gender": "Male",
+      "emergency_level": "Medium",
+      "additional_notes": "Health hazard for kids playing in the park.",
+      "complaint_status": "Pending",
+      "resolution_details": null,
+      "created_at": "2026-05-17T05:06:51.395Z"
+    },
+    {
+      "id": 3,
+      "complaint_id": "CMP1001",
+      "user_id": 3,
+      "complaint_title": "car",
+      "complaint_description": "lnnewrbhfev j dfnm",
+      "complaint_category": "Other",
+      "complaint_location": "karnataka",
+      "complaint_image": "/uploads/complaint-1779082073893-607698269.jpg",
+      "name": "harsha vardhana",
+      "email": "harsha8453@gmail.com",
+      "phone_number": "+919380268436",
+      "age": 16,
+      "gender": "Male",
+      "emergency_level": "Medium",
+      "additional_notes": "okpderobgjdk qienowrgrb",
+      "complaint_status": "In Progress",
+      "resolution_details": null,
+      "created_at": "2026-05-18T05:27:53.901Z"
+    }
+  ],
+  "contact_messages": [],
+  "admins": [
+    {
+      "id": 1,
+      "admin_name": "System Admin",
+      "email": "harsha@gmail.com",
+      "password": "$2a$10$hM9ojfe9GORQo6qdi/Tax.eWuaEzS/K9X8P4sEVE.IrkocqVS6rcK",
+      "role": "super_admin",
+      "created_at": "2026-05-18T05:06:51.395Z"
+    }
+  ]
+}
