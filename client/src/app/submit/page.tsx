@@ -30,6 +30,9 @@ export default function SubmitComplaint() {
   const [loading, setLoading] = useState(false);
   const [suggesting, setSuggesting] = useState(false);
   const [successData, setSuccessData] = useState(null); // Holds CMPXXXX details on success
+  const [estimatedDays, setEstimatedDays] = useState(null); // Holds ML regression output
+  const [priorityScore, setPriorityScore] = useState(null); // Holds ML Priority score output
+  const [predictedEmotion, setPredictedEmotion] = useState(null); // Holds ML Emotion classification output
 
   // Geolocation states
   const [fetchingLoc, setFetchingLoc] = useState(false);
@@ -47,7 +50,10 @@ export default function SubmitComplaint() {
     age: '',
     gender: 'Male',
     emergency_level: 'Medium',
-    additional_notes: ''
+    additional_notes: '',
+    estimated_days: '',
+    priority_score: '',
+    predicted_emotion: ''
   });
   
   const [imageFile, setImageFile] = useState(null);
@@ -147,14 +153,14 @@ export default function SubmitComplaint() {
     }
   };
 
-  // AI-Based Category Suggestion
+  // AI-Based Category and Sentiment Suggestion
   const handleAiSuggest = async () => {
     if (!formData.complaint_title && !formData.complaint_description) {
       return toast.error('Please enter a title or description first to run AI analysis!');
     }
 
     setSuggesting(true);
-    const loadingToast = toast.loading('AI analyzing details...');
+    const loadingToast = toast.loading('ML analyzing your text...');
     try {
       const res = await axios.post(`${apiUrl}/complaints/ai-suggest`, {
         title: formData.complaint_title,
@@ -163,15 +169,25 @@ export default function SubmitComplaint() {
       toast.dismiss(loadingToast);
 
       if (res.data.success) {
-        const suggested = res.data.suggested_category;
-        setFormData((prev) => ({ ...prev, complaint_category: suggested }));
-        toast.success(`AI suggests category: "${suggested}"!`);
+        const { suggested_category, suggested_urgency, estimated_days, suggested_priority, suggested_emotion } = res.data;
+        setFormData((prev) => ({ 
+          ...prev, 
+          complaint_category: suggested_category,
+          emergency_level: suggested_urgency,
+          estimated_days: estimated_days,
+          priority_score: suggested_priority,
+          predicted_emotion: suggested_emotion
+        }));
+        setEstimatedDays(estimated_days);
+        setPriorityScore(suggested_priority);
+        setPredictedEmotion(suggested_emotion);
+        toast.success(`ML Suggests: ${suggested_category} (${suggested_urgency} Priority) - Score: ${suggested_priority}/10 - Est. Resolution: ${estimated_days} days`);
       } else {
-        toast.error('AI suggestion failed, choose manually');
+        toast.error('ML prediction failed, choose manually');
       }
     } catch (err) {
       toast.dismiss(loadingToast);
-      toast.error('Could not connect to AI Suggestion service');
+      toast.error('Could not connect to ML classification service');
     } finally {
       setSuggesting(false);
     }
@@ -299,10 +315,16 @@ export default function SubmitComplaint() {
                       age: user?.age ? user.age.toString() : '',
                       gender: user?.gender || 'Male',
                       emergency_level: 'Medium',
-                      additional_notes: ''
+                      additional_notes: '',
+                      estimated_days: '',
+                      priority_score: '',
+                      predicted_emotion: ''
                     });
                     setImageFile(null);
                     setImagePreview(null);
+                    setEstimatedDays(null);
+                    setPriorityScore(null);
+                    setPredictedEmotion(null);
                   }}
                   className="rounded-2xl border border-zinc-200 dark:border-zinc-850 dark:bg-zinc-800 px-5 text-sm font-semibold text-zinc-700 dark:text-zinc-300"
                 >
@@ -447,6 +469,70 @@ export default function SubmitComplaint() {
                 </select>
               </div>
             </div>
+
+            {/* Display ML Regression & Emotion Outputs */}
+            <AnimatePresence>
+              {(estimatedDays !== null || priorityScore !== null || predictedEmotion !== null) && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2"
+                >
+                  {estimatedDays !== null && (
+                    <div className="bg-indigo-50/50 dark:bg-indigo-900/10 border border-indigo-200/50 dark:border-indigo-850 rounded-2xl p-4 flex items-center gap-4">
+                      <div className="bg-indigo-100 dark:bg-indigo-900 p-2.5 rounded-xl text-indigo-600 dark:text-indigo-400">
+                        <Sparkles className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-indigo-955 dark:text-indigo-300">AI Resolution Estimate</h4>
+                        <p className="text-xs text-indigo-700 dark:text-indigo-400 mt-0.5">
+                          Typically takes <strong className="font-extrabold text-indigo-655 dark:text-indigo-300">{estimatedDays} days</strong> to resolve.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  {priorityScore !== null && (
+                    <div className="bg-fuchsia-50/50 dark:bg-fuchsia-900/10 border border-fuchsia-200/50 dark:border-fuchsia-850 rounded-2xl p-4 flex flex-col justify-center">
+                      <div className="flex items-center gap-3">
+                        <div className="bg-fuchsia-100 dark:bg-fuchsia-900 p-2.5 rounded-xl text-fuchsia-600 dark:text-fuchsia-400">
+                          <ShieldAlert className="h-5 w-5" />
+                        </div>
+                        <div className="flex-grow">
+                          <h4 className="text-sm font-bold text-fuchsia-955 dark:text-fuchsia-300">AI Priority Score</h4>
+                          <div className="flex items-center gap-2 mt-1">
+                            <div className="flex-grow h-2 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
+                              <div 
+                                className="h-full bg-gradient-to-r from-pink-500 to-fuchsia-500 transition-all duration-1000"
+                                style={{ width: `${priorityScore * 10}%` }}
+                              />
+                            </div>
+                            <span className="text-xs font-mono font-extrabold text-fuchsia-600 dark:text-fuchsia-400">
+                              {priorityScore}/10
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {predictedEmotion !== null && (
+                    <div className="bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-200/50 dark:border-emerald-850 rounded-2xl p-4 flex items-center gap-4">
+                      <div className="bg-emerald-100 dark:bg-emerald-900 p-2.5 rounded-xl text-emerald-600 dark:text-emerald-400">
+                        <span className="text-xl">
+                          {predictedEmotion === 'Frustrated' ? '😠' : predictedEmotion === 'Concerned' ? '😨' : '😐'}
+                        </span>
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-emerald-955 dark:text-emerald-300">AI Citizen Emotion</h4>
+                        <p className="text-xs text-emerald-700 dark:text-emerald-400 mt-0.5">
+                          Classification: <strong className="font-extrabold text-emerald-655 dark:text-emerald-300">{predictedEmotion}</strong>
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Dynamic Map Embed */}
             {coordinates && (

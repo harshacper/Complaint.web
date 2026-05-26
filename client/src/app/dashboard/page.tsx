@@ -243,8 +243,19 @@ export default function UserDashboard() {
                               {c.complaint_title}
                             </h4>
                             <p className="text-xs text-zinc-400">
-                              Filed on: {new Date(c.created_at).toLocaleDateString()} Category: {c.complaint_category}
+                              Filed on: {new Date(c.created_at).toLocaleDateString()} | Category: {c.complaint_category}
                             </p>
+                            <div className="flex flex-wrap gap-2 mt-1.5">
+                              <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/25">
+                                ⏱️ Est. Resolution: {c.estimated_days || 7} days
+                              </span>
+                              <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-md bg-fuchsia-500/10 text-fuchsia-600 dark:text-fuchsia-400 border border-fuchsia-500/25">
+                                📊 AI Priority: {c.priority_score ? `${c.priority_score}/10` : '5.0/10'}
+                              </span>
+                              <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25">
+                                🎭 Mood: {c.predicted_emotion === 'Frustrated' ? '😠' : c.predicted_emotion === 'Concerned' ? '😨' : '😐'} {c.predicted_emotion || 'Neutral'}
+                              </span>
+                            </div>
                           </div>
 
                           <button

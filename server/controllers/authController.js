@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const db = require('../config/db');
+const supabase = require('../config/supabase');
 require('dotenv').config();
 
 // JWT Generation Helper
@@ -12,6 +13,36 @@ const generateToken = (payload) => {
   );
 };
 
+// Map local object to Supabase schema
+const mapLocalToSupabaseUser = (localUser) => {
+  return {
+    name: localUser.full_name,
+    email: localUser.email.toLowerCase(),
+    password: localUser.password,
+    phone: localUser.phone_number || '',
+    gender: localUser.gender || 'Other',
+    address: localUser.location || '',
+    role: localUser.role || 'user'
+  };
+};
+
+// Map Supabase schema back to local format
+const mapSupabaseToLocalUser = (sUser) => {
+  if (!sUser) return null;
+  return {
+    id: sUser.id,
+    full_name: sUser.name || '',
+    email: sUser.email,
+    password: sUser.password,
+    phone_number: sUser.phone || '',
+    location: sUser.address || '',
+    gender: sUser.gender || 'Other',
+    role: sUser.role || 'user',
+    profile_image: '/default-avatar.png',
+    created_at: sUser.created_at
+  };
+};
+
 // 1. User Registration
 exports.register = async (req, res) => {
   try {
@@ -21,9 +52,18 @@ exports.register = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Full name, email, and password are required' });
     }
 
-    // Check if email already exists
-    const [existing] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
-    if (existing && existing.length > 0) {
+    // Check if email already exists in Supabase
+    const { data: existingUsers, error: checkError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', email.toLowerCase());
+
+    if (checkError) {
+      console.error('Supabase Email Check Error:', checkError);
+      return res.status(500).json({ success: false, message: 'Database check failed', error: checkError.message });
+    }
+
+    if (existingUsers && existingUsers.length > 0) {
       return res.status(400).json({ success: false, message: 'A user with this email address already exists' });
     }
 
@@ -31,42 +71,41 @@ exports.register = async (req, res) => {
     const salt = await bcrypt.genSalt(12);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Insert user into database
-    const [result] = await db.query(
-      'INSERT INTO users (full_name, email, password, phone_number, location, age, gender, role, profile_image) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [
-        full_name,
-        email.toLowerCase(),
-        hashedPassword,
-        phone_number || '',
-        location || '',
-        age ? parseInt(age) : null,
-        gender || 'Other',
-        'user',
-        '/default-avatar.png'
-      ]
-    );
+    // Insert user into Supabase
+    const supabaseUser = mapLocalToSupabaseUser({
+      full_name,
+      email,
+      password: hashedPassword,
+      phone_number,
+      location,
+      gender,
+      role: 'user'
+    });
 
-    const userId = result.insertId;
+    const { data: newUsers, error: insertError } = await supabase
+      .from('users')
+      .insert([supabaseUser])
+      .select();
+
+    if (insertError) {
+      console.error('Supabase Register Insert Error:', insertError);
+      return res.status(500).json({ success: false, message: 'Server error during registration', error: insertError.message });
+    }
+
+    if (!newUsers || newUsers.length === 0) {
+      return res.status(500).json({ success: false, message: 'Failed to create user account' });
+    }
+
+    const createdUser = mapSupabaseToLocalUser(newUsers[0]);
 
     // Generate JWT
-    const token = generateToken({ id: userId, email: email.toLowerCase(), role: 'user' });
+    const token = generateToken({ id: createdUser.id, email: createdUser.email, role: createdUser.role });
 
     res.status(201).json({
       success: true,
       message: 'Account created successfully',
       token,
-      user: {
-        id: userId,
-        full_name,
-        email: email.toLowerCase(),
-        phone_number: phone_number || '',
-        location: location || '',
-        age: age ? parseInt(age) : null,
-        gender: gender || 'Other',
-        role: 'user',
-        profile_image: '/default-avatar.png'
-      }
+      user: createdUser
     });
   } catch (error) {
     console.error('Registration Error:', error);
@@ -83,44 +122,49 @@ exports.login = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Email and password are required' });
     }
 
-    // Find user by email
-    const [users] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
+    // Find user by email in Supabase
+    const { data: users, error: findError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', email.toLowerCase());
+
+    if (findError) {
+      console.error('Supabase Login Find Error:', findError);
+      return res.status(500).json({ success: false, message: 'Database query failed', error: findError.message });
+    }
+
     if (!users || users.length === 0) {
       return res.status(400).json({ success: false, message: 'Invalid credentials' });
     }
 
-    const user = users[0];
+    const sUser = users[0];
 
     // Verify password
-    const isMatch = await bcrypt.compare(password, user.password);
+    const isMatch = await bcrypt.compare(password, sUser.password);
     if (!isMatch) {
       return res.status(400).json({ success: false, message: 'Invalid credentials' });
     }
 
-    // Record login in history
-    await db.query(
-      'INSERT INTO login_history (user_id, ip_address, device_info) VALUES (?, ?, ?)',
-      [user.id, ip_address || req.ip || '127.0.0.1', device_info || req.headers['user-agent'] || 'Unknown Device']
-    );
+    const localUser = mapSupabaseToLocalUser(sUser);
+
+    // Record login in history (optional logging, fallback to local DB safely)
+    try {
+      await db.query(
+        'INSERT INTO login_history (user_id, ip_address, device_info) VALUES (?, ?, ?)',
+        [localUser.id, ip_address || req.ip || '127.0.0.1', device_info || req.headers['user-agent'] || 'Unknown Device']
+      );
+    } catch (e) {
+      console.log('Skipped writing login history to database:', e.message);
+    }
 
     // Generate JWT
-    const token = generateToken({ id: user.id, email: user.email, role: user.role });
+    const token = generateToken({ id: localUser.id, email: localUser.email, role: localUser.role });
 
     res.status(200).json({
       success: true,
       message: 'Login successful',
       token,
-      user: {
-        id: user.id,
-        full_name: user.full_name,
-        email: user.email,
-        phone_number: user.phone_number,
-        location: user.location,
-        age: user.age,
-        gender: user.gender,
-        role: user.role,
-        profile_image: user.profile_image
-      }
+      user: localUser
     });
   } catch (error) {
     console.error('Login Error:', error);
@@ -139,62 +183,70 @@ exports.googleAuth = async (req, res) => {
 
     const { email, name, imageUrl } = profile;
 
-    // Check if user already exists
-    const [users] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
-    let user;
+    // Check if user already exists in Supabase
+    const { data: users, error: findError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', email.toLowerCase());
+
+    if (findError) {
+      console.error('Supabase Google Auth Find Error:', findError);
+      return res.status(500).json({ success: false, message: 'Database query failed' });
+    }
+
+    let sUser;
 
     if (!users || users.length === 0) {
-      // Create new user for google auth
-      // Generate standard random password since they login via Google
+      // Create new user for google auth in Supabase
       const salt = await bcrypt.genSalt(10);
       const randomPassword = Math.random().toString(36).slice(-10) + 'A1!';
       const hashedPassword = await bcrypt.hash(randomPassword, salt);
 
-      const [result] = await db.query(
-        'INSERT INTO users (full_name, email, password, phone_number, location, age, gender, role, profile_image) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [
-          name,
-          email.toLowerCase(),
-          hashedPassword,
-          '',
-          '',
-          null,
-          'Other',
-          'user',
-          imageUrl || '/default-avatar.png'
-        ]
-      );
-      
-      const [newUsers] = await db.query('SELECT * FROM users WHERE id = ?', [result.insertId]);
-      user = newUsers[0];
+      const supabaseUser = mapLocalToSupabaseUser({
+        full_name: name,
+        email,
+        password: hashedPassword,
+        phone_number: '',
+        location: '',
+        gender: 'Other',
+        role: 'user'
+      });
+
+      const { data: newUsers, error: insertError } = await supabase
+        .from('users')
+        .insert([supabaseUser])
+        .select();
+
+      if (insertError) {
+        console.error('Supabase Google Auth Insert Error:', insertError);
+        return res.status(500).json({ success: false, message: 'Failed to create user from Google profile' });
+      }
+
+      sUser = newUsers[0];
     } else {
-      user = users[0];
+      sUser = users[0];
     }
 
-    // Save login history
-    await db.query(
-      'INSERT INTO login_history (user_id, ip_address, device_info) VALUES (?, ?, ?)',
-      [user.id, ip_address || 'Google OAuth', device_info || 'Browser']
-    );
+    const localUser = mapSupabaseToLocalUser(sUser);
+
+    // Save login history to local database safely
+    try {
+      await db.query(
+        'INSERT INTO login_history (user_id, ip_address, device_info) VALUES (?, ?, ?)',
+        [localUser.id, ip_address || 'Google OAuth', device_info || 'Browser']
+      );
+    } catch (e) {
+      console.log('Skipped writing login history to database:', e.message);
+    }
 
     // Issue JWT
-    const token = generateToken({ id: user.id, email: user.email, role: user.role });
+    const token = generateToken({ id: localUser.id, email: localUser.email, role: localUser.role });
 
     res.status(200).json({
       success: true,
       message: 'Google login successful',
       token,
-      user: {
-        id: user.id,
-        full_name: user.full_name,
-        email: user.email,
-        phone_number: user.phone_number,
-        location: user.location,
-        age: user.age,
-        gender: user.gender,
-        role: user.role,
-        profile_image: user.profile_image
-      }
+      user: localUser
     });
   } catch (error) {
     console.error('Google Auth Error:', error);
@@ -205,26 +257,24 @@ exports.googleAuth = async (req, res) => {
 // 4. Get Logged In User Profile
 exports.getMe = async (req, res) => {
   try {
-    const [users] = await db.query('SELECT * FROM users WHERE id = ?', [req.user.id]);
+    const { data: users, error: findError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', req.user.id);
+
+    if (findError) {
+      console.error('Supabase getMe Find Error:', findError);
+      return res.status(500).json({ success: false, message: 'Database query failed' });
+    }
+
     if (!users || users.length === 0) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    const user = users[0];
+    const localUser = mapSupabaseToLocalUser(users[0]);
     res.status(200).json({
       success: true,
-      user: {
-        id: user.id,
-        full_name: user.full_name,
-        email: user.email,
-        phone_number: user.phone_number,
-        location: user.location,
-        age: user.age,
-        gender: user.gender,
-        role: user.role,
-        profile_image: user.profile_image,
-        created_at: user.created_at
-      }
+      user: localUser
     });
   } catch (error) {
     console.error('Get Profile Error:', error);
@@ -237,46 +287,49 @@ exports.updateProfile = async (req, res) => {
   try {
     const { full_name, phone_number, location, age, gender, profile_image } = req.body;
 
-    // Check if user exists
-    const [users] = await db.query('SELECT * FROM users WHERE id = ?', [req.user.id]);
+    // Check if user exists in Supabase
+    const { data: users, error: findError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', req.user.id);
+
+    if (findError) {
+      console.error('Supabase updateProfile Find Error:', findError);
+      return res.status(500).json({ success: false, message: 'Database query failed' });
+    }
+
     if (!users || users.length === 0) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    const currentUser = users[0];
+    const currentSUser = users[0];
 
-    // Update in database
-    await db.query(
-      'UPDATE users SET full_name = ?, phone_number = ?, location = ?, age = ?, gender = ?, profile_image = ? WHERE email = ?',
-      [
-        full_name || currentUser.full_name,
-        phone_number !== undefined ? phone_number : currentUser.phone_number,
-        location !== undefined ? location : currentUser.location,
-        age ? parseInt(age) : currentUser.age,
-        gender || currentUser.gender,
-        profile_image || currentUser.profile_image,
-        currentUser.email
-      ]
-    );
+    // Prepare updated fields for Supabase
+    const updatedSUser = {
+      name: full_name || currentSUser.name,
+      phone: phone_number !== undefined ? phone_number : currentSUser.phone,
+      address: location !== undefined ? location : currentSUser.address,
+      gender: gender || currentSUser.gender
+    };
 
-    // Retrieve updated user details
-    const [updatedUsers] = await db.query('SELECT * FROM users WHERE id = ?', [req.user.id]);
-    const user = updatedUsers[0];
+    // Update in Supabase
+    const { data: updatedUsers, error: updateError } = await supabase
+      .from('users')
+      .update(updatedSUser)
+      .eq('id', req.user.id)
+      .select();
+
+    if (updateError) {
+      console.error('Supabase updateProfile Update Error:', updateError);
+      return res.status(500).json({ success: false, message: 'Failed to update profile' });
+    }
+
+    const localUser = mapSupabaseToLocalUser(updatedUsers[0]);
 
     res.status(200).json({
       success: true,
       message: 'Profile updated successfully',
-      user: {
-        id: user.id,
-        full_name: user.full_name,
-        email: user.email,
-        phone_number: user.phone_number,
-        location: user.location,
-        age: user.age,
-        gender: user.gender,
-        role: user.role,
-        profile_image: user.profile_image
-      }
+      user: localUser
     });
   } catch (error) {
     console.error('Update Profile Error:', error);
@@ -287,7 +340,13 @@ exports.updateProfile = async (req, res) => {
 // 6. Get User Login History
 exports.getLoginHistory = async (req, res) => {
   try {
-    const [history] = await db.query('SELECT * FROM login_history WHERE user_id = ? ORDER BY login_time DESC LIMIT 10', [req.user.id]);
+    let history = [];
+    try {
+      const [rows] = await db.query('SELECT * FROM login_history WHERE user_id = ? ORDER BY login_time DESC LIMIT 10', [req.user.id]);
+      history = rows;
+    } catch (dbError) {
+      console.log('Skipped fetching login history from local DB:', dbError.message);
+    }
     res.status(200).json({
       success: true,
       history
@@ -306,16 +365,19 @@ exports.forgotPassword = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Email address is required' });
     }
 
-    const [users] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
-    if (!users || users.length === 0) {
-      // For security, return success even if user not found, so hackers can't harvest emails
+    const { data: users, error: findError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', email.toLowerCase());
+
+    if (findError || !users || users.length === 0) {
+      // For security, return success even if user not found
       return res.status(200).json({ success: true, message: 'If the email exists, a password reset link has been sent!' });
     }
 
     // Generates a mock token
     const resetToken = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
     
-    // In production, save to db and send email. For demo/prototyping, we just return the success
     console.log(`🔑 Reset token for ${email}: ${resetToken}`);
     
     res.status(200).json({

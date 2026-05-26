@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const supabase = require('../config/supabase');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
@@ -12,6 +13,29 @@ const generateAdminToken = (payload) => {
   );
 };
 
+// Map Supabase schema back to local format
+const mapSupabaseToLocalComplaint = (sComp) => {
+  if (!sComp) return null;
+  return {
+    id: sComp.id,
+    complaint_id: `CMP${1000 + sComp.id}`,
+    complaint_title: sComp.title,
+    complaint_description: sComp.description,
+    complaint_category: sComp.category,
+    complaint_location: sComp.location,
+    complaint_image: sComp.image_data,
+    name: sComp.user_name,
+    email: sComp.user_email,
+    phone_number: sComp.contact || '',
+    emergency_level: 'Medium', // default fallback since Supabase table doesn't have it
+    complaint_status: sComp.status,
+    created_at: sComp.created_at,
+    estimated_days: sComp.estimated_days || 7,
+    priority_score: sComp.priority_score || 5.0,
+    predicted_emotion: sComp.predicted_emotion || 'Neutral'
+  };
+};
+
 // 1. Admin Login
 exports.adminLogin = async (req, res) => {
   try {
@@ -21,40 +45,34 @@ exports.adminLogin = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Email and password are required' });
     }
 
-    // Check admins table
-    const [admins] = await db.query('SELECT * FROM admins WHERE email = ?', [email]);
-    let admin = null;
-    let isMatch = false;
+    // Check Supabase users table where email matches and role = 'admin'
+    const { data: users, error: findError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', email.toLowerCase())
+      .eq('role', 'admin');
 
-    if (admins && admins.length > 0) {
-      admin = admins[0];
-      // Compare hashed password
-      isMatch = await bcrypt.compare(password, admin.password);
-    } else {
-      // Fallback: Check if there's a user in the users table with role = 'admin'
-      const [users] = await db.query('SELECT * FROM users WHERE email = ? AND role = "admin"', [email]);
-      if (users && users.length > 0) {
-        admin = {
-          id: users[0].id,
-          admin_name: users[0].full_name,
-          email: users[0].email,
-          password: users[0].password,
-          role: 'super_admin'
-        };
-        isMatch = await bcrypt.compare(password, admin.password);
-      }
+    if (findError) {
+      console.error('Supabase Admin Login Error:', findError);
+      return res.status(500).json({ success: false, message: 'Database query failed', error: findError.message });
     }
 
-    if (!admin || !isMatch) {
+    if (!users || users.length === 0) {
+      return res.status(401).json({ success: false, message: 'Invalid admin credentials' });
+    }
+
+    const adminUser = users[0];
+    const isMatch = await bcrypt.compare(password, adminUser.password);
+    if (!isMatch) {
       return res.status(401).json({ success: false, message: 'Invalid admin credentials' });
     }
 
     // Generate Admin JWT
     const token = generateAdminToken({
-      id: admin.id,
-      email: admin.email,
+      id: adminUser.id,
+      email: adminUser.email,
       role: 'admin',
-      admin_name: admin.admin_name
+      admin_name: adminUser.name
     });
 
     res.status(200).json({
@@ -62,10 +80,10 @@ exports.adminLogin = async (req, res) => {
       message: 'Admin authentication successful',
       token,
       admin: {
-        id: admin.id,
-        name: admin.admin_name,
-        email: admin.email,
-        role: admin.role
+        id: adminUser.id,
+        name: adminUser.name,
+        email: adminUser.email,
+        role: adminUser.role
       }
     });
   } catch (error) {
@@ -79,38 +97,36 @@ exports.getAllComplaints = async (req, res) => {
   try {
     const { search, category, status, emergency } = req.query;
 
-    let queryStr = 'SELECT * FROM complaints WHERE 1=1';
-    let queryParams = [];
-
-    // Search filter
-    if (search) {
-      queryStr += ' AND (complaint_title LIKE ? OR complaint_description LIKE ? OR complaint_id LIKE ? OR name LIKE ? OR email LIKE ?)';
-      const searchWild = `%${search}%`;
-      queryParams.push(searchWild, searchWild, searchWild, searchWild, searchWild);
-    }
+    let query = supabase.from('complaints').select('*');
 
     // Category filter
     if (category && category !== 'All') {
-      queryStr += ' AND complaint_category = ?';
-      queryParams.push(category);
+      query = query.eq('category', category);
     }
 
     // Status filter
     if (status && status !== 'All') {
-      queryStr += ' AND complaint_status = ?';
-      queryParams.push(status);
+      query = query.eq('status', status);
     }
 
-    // Emergency Level filter
+    if (search) {
+      const searchWild = `%${search}%`;
+      query = query.or(`title.ilike.${searchWild},description.ilike.${searchWild},user_name.ilike.${searchWild},user_email.ilike.${searchWild}`);
+    }
+
+    const { data: supabaseComplaints, error: findError } = await query.order('created_at', { ascending: false });
+
+    if (findError) {
+      console.error('Admin Get Complaints Error:', findError);
+      return res.status(500).json({ success: false, message: 'Failed to fetch complaints from database' });
+    }
+
+    let complaints = supabaseComplaints.map(mapSupabaseToLocalComplaint);
+
+    // If emergency filter is set and not "All"
     if (emergency && emergency !== 'All') {
-      queryStr += ' AND emergency_level = ?';
-      queryParams.push(emergency);
+      complaints = complaints.filter(c => c.emergency_level === emergency);
     }
-
-    // Sort by newest first
-    queryStr += ' ORDER BY created_at DESC';
-
-    const [complaints] = await db.query(queryStr, queryParams);
 
     res.status(200).json({
       success: true,
@@ -133,29 +149,48 @@ exports.updateComplaintStatus = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Status is required' });
     }
 
-    // Check if complaint exists
-    const [complaints] = await db.query('SELECT * FROM complaints WHERE id = ?', [id]);
-    if (!complaints || complaints.length === 0) {
+    // Check if complaint exists in Supabase
+    const { data: complaints, error: findError } = await supabase
+      .from('complaints')
+      .select('*')
+      .eq('id', id);
+
+    if (findError || !complaints || complaints.length === 0) {
       return res.status(404).json({ success: false, message: 'Complaint not found' });
     }
 
     const complaint = complaints[0];
 
-    // Update status
-    await db.query(
-      'UPDATE complaints SET complaint_status = ?, resolution_details = ? WHERE id = ?',
-      [complaint_status, resolution_details || null, id]
-    );
+    // Update in Supabase
+    const { error: updateError } = await supabase
+      .from('complaints')
+      .update({ status: complaint_status })
+      .eq('id', id);
+
+    if (updateError) {
+      console.error('Supabase Update Status Error:', updateError);
+      return res.status(500).json({ success: false, message: 'Failed to update status in database' });
+    }
+
+    // Also update local database safely as backup
+    try {
+      await db.query(
+        'UPDATE complaints SET complaint_status = ?, resolution_details = ? WHERE id = ?',
+        [complaint_status, resolution_details || null, id]
+      );
+    } catch (e) {
+      console.log('Skipped local DB update status:', e.message);
+    }
 
     // Mock Email dispatch to user informing about status update
-    console.log(`✉️ Mail sent to ${complaint.email}: Your complaint ${complaint.complaint_id} status has been updated to "${complaint_status}". Resolution: ${resolution_details || 'N/A'}`);
+    console.log(`✉️ Mail sent to ${complaint.user_email}: Your complaint CMP${1000 + complaint.id} status has been updated to "${complaint_status}".`);
 
     res.status(200).json({
       success: true,
       message: `Complaint status updated to ${complaint_status} successfully`,
       data: {
         id,
-        complaint_id: complaint.complaint_id,
+        complaint_id: `CMP${1000 + complaint.id}`,
         complaint_status,
         resolution_details
       }
@@ -171,14 +206,33 @@ exports.deleteComplaint = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Check if complaint exists
-    const [complaints] = await db.query('SELECT * FROM complaints WHERE id = ?', [id]);
-    if (!complaints || complaints.length === 0) {
+    // Check if complaint exists in Supabase
+    const { data: complaints, error: findError } = await supabase
+      .from('complaints')
+      .select('*')
+      .eq('id', id);
+
+    if (findError || !complaints || complaints.length === 0) {
       return res.status(404).json({ success: false, message: 'Complaint not found' });
     }
 
-    // Delete complaint
-    await db.query('DELETE FROM complaints WHERE id = ?', [id]);
+    // Delete from Supabase
+    const { error: deleteError } = await supabase
+      .from('complaints')
+      .delete()
+      .eq('id', id);
+
+    if (deleteError) {
+      console.error('Supabase Delete Complaint Error:', deleteError);
+      return res.status(500).json({ success: false, message: 'Failed to delete complaint from database' });
+    }
+
+    // Also delete from local database safely
+    try {
+      await db.query('DELETE FROM complaints WHERE id = ?', [id]);
+    } catch (e) {
+      console.log('Skipped deleting complaint from local database:', e.message);
+    }
 
     res.status(200).json({
       success: true,
@@ -193,7 +247,29 @@ exports.deleteComplaint = async (req, res) => {
 // 5. Get All Users
 exports.getAllUsers = async (req, res) => {
   try {
-    const [users] = await db.query('SELECT id, full_name, email, phone_number, location, age, gender, role, profile_image, created_at FROM users ORDER BY created_at DESC');
+    const { data: supabaseUsers, error: findError } = await supabase
+      .from('users')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (findError) {
+      console.error('Supabase Get Users Error:', findError);
+      return res.status(500).json({ success: false, message: 'Failed to fetch users list' });
+    }
+
+    const users = supabaseUsers.map(sUser => ({
+      id: sUser.id,
+      full_name: sUser.name || '',
+      email: sUser.email,
+      phone_number: sUser.phone || '',
+      location: sUser.address || '',
+      age: null,
+      gender: sUser.gender || 'Other',
+      role: sUser.role || 'user',
+      profile_image: '/default-avatar.png',
+      created_at: sUser.created_at
+    }));
+
     res.status(200).json({
       success: true,
       users
@@ -207,12 +283,25 @@ exports.getAllUsers = async (req, res) => {
 // 6. Get Admin Analytics
 exports.getAnalytics = async (req, res) => {
   try {
-    const [complaints] = await db.query('SELECT * FROM complaints');
-    const [users] = await db.query('SELECT id FROM users WHERE role = "user"');
+    // Fetch all complaints from Supabase
+    const { data: supabaseComplaints, error: compError } = await supabase
+      .from('complaints')
+      .select('*');
 
-    // Count statistics
+    // Fetch all regular users from Supabase
+    const { data: supabaseUsers, error: userError } = await supabase
+      .from('users')
+      .select('id')
+      .eq('role', 'user');
+
+    if (compError || userError) {
+      console.error('Supabase Analytics Error:', compError || userError);
+      return res.status(500).json({ success: false, message: 'Failed to compile analytics' });
+    }
+
+    const complaints = supabaseComplaints.map(mapSupabaseToLocalComplaint);
     const totalComplaints = complaints.length;
-    const totalUsers = users.length;
+    const totalUsers = supabaseUsers ? supabaseUsers.length : 0;
 
     const stats = {
       Pending: 0,
@@ -245,7 +334,6 @@ exports.getAnalytics = async (req, res) => {
       }
     });
 
-    // Formatting analytics for Recharts
     const statusData = Object.keys(stats).map(key => ({
       name: key,
       value: stats[key]
@@ -279,10 +367,46 @@ exports.getAnalytics = async (req, res) => {
   }
 };
 
+// Helper to map Supabase contact message back to Admin format
+const mapSupabaseToLocalMessage = (sMsg) => {
+  if (!sMsg) return null;
+  let subject = 'Contact Inquiry';
+  let message = sMsg.message || '';
+  
+  if (message.startsWith('[Subject:')) {
+    const endIndex = message.indexOf(']');
+    if (endIndex !== -1) {
+      subject = message.slice(9, endIndex).trim();
+      message = message.slice(endIndex + 1).trim();
+    }
+  }
+  
+  return {
+    id: sMsg.id,
+    name: sMsg.name,
+    email: sMsg.email,
+    subject,
+    message,
+    is_read: false,
+    created_at: sMsg.created_at
+  };
+};
+
 // 7. Get All Contact Messages
 exports.getAllContactMessages = async (req, res) => {
   try {
-    const [messages] = await db.query('SELECT * FROM contact_messages');
+    const { data: supabaseMsgs, error: findError } = await supabase
+      .from('contact_messages')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (findError) {
+      console.error('Supabase Contact Message Fetch Error:', findError);
+      return res.status(500).json({ success: false, message: 'Failed to fetch contact messages' });
+    }
+
+    const messages = supabaseMsgs.map(mapSupabaseToLocalMessage);
+
     res.status(200).json({
       success: true,
       count: messages.length,
@@ -298,7 +422,25 @@ exports.getAllContactMessages = async (req, res) => {
 exports.deleteContactMessage = async (req, res) => {
   try {
     const { id } = req.params;
-    await db.query('DELETE FROM contact_messages WHERE id = ?', [id]);
+
+    // Delete from Supabase
+    const { error: deleteError } = await supabase
+      .from('contact_messages')
+      .delete()
+      .eq('id', id);
+
+    if (deleteError) {
+      console.error('Supabase Delete Message Error:', deleteError);
+      return res.status(500).json({ success: false, message: 'Failed to delete message from database' });
+    }
+
+    // Also delete from local database safely
+    try {
+      await db.query('DELETE FROM contact_messages WHERE id = ?', [id]);
+    } catch (e) {
+      console.log('Skipped deleting contact message from local database:', e.message);
+    }
+
     res.status(200).json({
       success: true,
       message: 'Contact message deleted successfully'

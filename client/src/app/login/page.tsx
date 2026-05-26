@@ -270,7 +270,7 @@ function AuthContent() {
                             name="full_name"
                             value={formData.full_name}
                             onChange={handleChange}
-                            placeholder="Harsha Vardhana"
+                            placeholder="Enter your full name"
                             className="w-full rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-950/50 py-3.5 pl-12 pr-4 text-sm outline-none focus:border-indigo-500 dark:focus:border-indigo-400 transition-colors"
                             required={isRegister}
                           />
@@ -289,71 +289,29 @@ function AuthContent() {
                             name="phone_number"
                             value={formData.phone_number}
                             onChange={handleChange}
-                            placeholder="+91 98765 43210"
+                            placeholder="Enter your phone number"
                             className="w-full rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-950/50 py-3.5 pl-12 pr-4 text-sm outline-none focus:border-indigo-500 dark:focus:border-indigo-400 transition-colors"
                           />
                         </div>
                       </div>
 
-                      {/* Location */}
+                      {/* Age */}
                       <div>
                         <label className="block text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-2">
-                          {t('location')}
+                          {t('age')}
                         </label>
                         <div className="relative">
-                          <MapPin className="absolute left-4 top-3.5 h-5 w-5 text-zinc-400" />
+                          <Calendar className="absolute left-4 top-3.5 h-5 w-5 text-zinc-400" />
                           <input
-                            type="text"
-                            name="location"
-                            value={formData.location}
+                            type="number"
+                            name="age"
+                            value={formData.age}
                             onChange={handleChange}
-                            placeholder="Bengaluru, Karnataka"
-                            className="w-full rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-950/50 py-3.5 pl-12 pr-4 text-sm outline-none focus:border-indigo-500 dark:focus:border-indigo-400 transition-colors"
+                            placeholder="Enter your age"
+                            min="1"
+                            max="120"
+                            className="w-full rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-950/50 py-3.5 pl-12 pr-4 text-sm outline-none focus:border-indigo-500 dark:focus:border-indigo-400 transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           />
-                        </div>
-                      </div>
-
-                      {/* Age and Gender Grid */}
-                      <div className="grid grid-cols-2 gap-4">
-                        {/* Age */}
-                        <div>
-                          <label className="block text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-2">
-                            {t('age')}
-                          </label>
-                          <div className="relative">
-                            <Calendar className="absolute left-4 top-3.5 h-5 w-5 text-zinc-400" />
-                            <input
-                              type="number"
-                              name="age"
-                              value={formData.age}
-                              onChange={handleChange}
-                              placeholder="23"
-                              min="1"
-                              max="120"
-                              className="w-full rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-950/50 py-3.5 pl-12 pr-4 text-sm outline-none focus:border-indigo-500 dark:focus:border-indigo-400 transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                            />
-                          </div>
-                        </div>
-
-                        {/* Gender */}
-                        <div>
-                          <label className="block text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-2">
-                            {t('gender')}
-                          </label>
-                          <div className="relative">
-                            <Users className="absolute left-4 top-3.5 h-5 w-5 text-zinc-400" />
-                            <select
-                              name="gender"
-                              value={formData.gender}
-                              onChange={handleChange}
-                              className="w-full rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-950/50 py-3.5 pl-12 pr-4 text-sm outline-none focus:border-indigo-500 dark:focus:border-indigo-400 transition-colors appearance-none"
-                            >
-                              <option value="Male">{t('genderMale')}</option>
-                              <option value="Female">{t('genderFemale')}</option>
-                              <option value="Other">{t('genderOther')}</option>
-                              <option value="Prefer not to say">{t('genderPreferNot')}</option>
-                            </select>
-                          </div>
                         </div>
                       </div>
                     </motion.div>
@@ -373,7 +331,7 @@ function AuthContent() {
                       name="email"
                       value={formData.email}
                       onChange={handleChange}
-                      placeholder="harsha@gmail.com"
+                      placeholder="Enter your email address"
                       className="w-full rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-950/50 py-3.5 pl-12 pr-4 text-sm outline-none focus:border-indigo-500 dark:focus:border-indigo-400 transition-colors"
                       required
                     />
@@ -403,7 +361,7 @@ function AuthContent() {
                       name="password"
                       value={formData.password}
                       onChange={handleChange}
-                      placeholder="••••••••"
+                      placeholder="Enter your password"
                       className="w-full rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-950/50 py-3.5 pl-12 pr-12 text-sm outline-none focus:border-indigo-500 dark:focus:border-indigo-400 transition-colors"
                       required
                     />

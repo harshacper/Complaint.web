@@ -289,7 +289,7 @@ export default function AdminPortal() {
                   <ShieldAlert className="h-6 w-6" />
                 </div>
                 <h2 className="text-2xl font-bold text-zinc-900 dark:text-white">Admin Clearance Portal</h2>
-                <p className="text-xs text-zinc-400 mt-2">Enter credentials below. Default: admin@complainsy.com (Admin@123456)</p>
+                <p className="text-xs text-zinc-400 mt-2">Enter credentials below. Default: harsha@gmail.com (harsha@#$)</p>
               </div>
 
               <form onSubmit={handleAdminLogin} className="space-y-5">
@@ -650,6 +650,21 @@ export default function AdminPortal() {
                                   <div className="flex justify-between"><span className="font-semibold">Email:</span> <span className="font-mono">{editingComplaint.email}</span></div>
                                   <div className="flex justify-between"><span className="font-semibold">Phone:</span> <span>{editingComplaint.phone_number || 'N/A'}</span></div>
                                   <div className="flex justify-between"><span className="font-semibold">Demographics:</span> <span>{editingComplaint.age ? `${editingComplaint.age} yrs` : 'N/A'} / {editingComplaint.gender}</span></div>
+                                </div>
+                              </div>
+
+                              <div>
+                                <h4 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5">AI Insights & Sentiment</h4>
+                                <div className="bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/40 dark:border-zinc-850 rounded-2xl p-4 space-y-2.5 text-xs text-zinc-700 dark:text-zinc-300">
+                                  <div className="flex justify-between"><span className="font-semibold">Est. Resolution Time:</span> <span>⏱️ {editingComplaint.estimated_days || 7} days</span></div>
+                                  <div className="flex justify-between"><span className="font-semibold">AI Priority Score:</span> <span className="font-mono">{editingComplaint.priority_score ? `${editingComplaint.priority_score}/10` : '5.0/10'}</span></div>
+                                  <div className="flex justify-between">
+                                    <span className="font-semibold">AI Citizen Emotion:</span> 
+                                    <span>
+                                      {editingComplaint.predicted_emotion === 'Frustrated' ? '😠' : editingComplaint.predicted_emotion === 'Concerned' ? '😨' : '😐'}{' '}
+                                      {editingComplaint.predicted_emotion || 'Neutral'}
+                                    </span>
+                                  </div>
                                 </div>
                               </div>
 

@@ -44,11 +44,14 @@ export default function Home() {
   return (
     <div className="relative w-full overflow-hidden bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50 transition-colors duration-300">
       
-      {/* 1. Animated Radial Mesh Background */}
-      <div className="absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute top-0 right-0 h-[500px] w-[500px] rounded-full bg-violet-600/10 blur-[120px] dark:bg-violet-600/5" />
-        <div className="absolute top-[20%] left-[-100px] h-[600px] w-[600px] rounded-full bg-indigo-600/10 blur-[130px] dark:bg-indigo-600/5 animate-pulse" />
-        <div className="absolute bottom-0 right-[10%] h-[400px] w-[400px] rounded-full bg-fuchsia-600/10 blur-[110px] dark:bg-fuchsia-600/5" />
+      {/* 1. Word Cloud Hero Background Image with Mask Overlay */}
+      <div className="absolute inset-0 -z-10 overflow-hidden opacity-10 dark:opacity-5 transition-opacity duration-300">
+        <img 
+          src="/bg-hero.png" 
+          alt="Complainsy watermark background" 
+          className="h-full w-full object-cover object-center filter grayscale"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-white to-white dark:from-zinc-950/10 dark:via-zinc-950 to-zinc-950" />
       </div>
 
       {/* 2. Hero Section */}

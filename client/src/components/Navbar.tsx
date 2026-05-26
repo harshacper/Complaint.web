@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
-import { Menu, X, Sun, Moon, Globe, LogOut, LayoutDashboard, User, ShieldAlert } from 'lucide-react';
+import { Menu, X, Sun, Moon, Globe, LogOut } from 'lucide-react';
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -32,8 +32,8 @@ export default function Navbar() {
           {/* Logo */}
           <div className="flex items-center">
             <Link href="/" className="flex items-center gap-2 group">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-600 text-white shadow-lg shadow-indigo-500/20 group-hover:scale-105 transition-transform duration-300">
-                <ShieldAlert className="h-5 w-5" />
+              <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl bg-indigo-500/10 border border-indigo-500/20 shadow-md group-hover:scale-105 transition-transform duration-300">
+                <img src="/logo.png" alt="Complainsy Logo" className="h-full w-full object-cover" />
               </div>
               <span className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent dark:from-violet-400 dark:to-indigo-400">
                 {t('appName')}
@@ -105,19 +105,13 @@ export default function Navbar() {
             {/* Auth Buttons */}
             {isAdminAuthenticated ? (
               <div className="flex items-center gap-3">
-                <Link
-                  href="/admin"
-                  className="flex items-center gap-1.5 rounded-xl bg-violet-600/10 px-3 py-1.5 text-xs font-semibold text-violet-600 dark:bg-violet-500/10 dark:text-violet-400 border border-violet-500/20"
-                >
-                  <LayoutDashboard className="h-3.5 w-3.5" />
-                  {t('navAdmin')}
-                </Link>
                 <button
                   onClick={adminLogout}
-                  className="rounded-xl bg-rose-500/10 p-2 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400 hover:bg-rose-500/20 transition-colors border border-rose-500/20"
+                  className="flex items-center gap-1.5 rounded-xl bg-rose-500/10 px-3 py-1.5 text-xs font-semibold text-rose-600 dark:bg-rose-500/10 dark:text-rose-400 hover:bg-rose-500/20 transition-colors border border-rose-500/20"
                   title="Admin Logout"
                 >
                   <LogOut className="h-4 w-4" />
+                  <span>Admin Logout</span>
                 </button>
               </div>
             ) : isUserAuthenticated ? (
@@ -173,7 +167,7 @@ export default function Navbar() {
             </button>
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="rounded-xl p-1.5 text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800 transition-colors"
+              className="rounded-xl p-1.5 text-zinc-650 hover:bg-zinc-100 dark:text-zinc-305 dark:hover:bg-zinc-800 transition-colors"
             >
               {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
@@ -216,14 +210,6 @@ export default function Navbar() {
           <div className="mt-2 border-t border-zinc-200/50 pt-3 dark:border-zinc-800">
             {isAdminAuthenticated ? (
               <div className="flex flex-col gap-2">
-                <Link
-                  href="/admin"
-                  onClick={() => setIsOpen(false)}
-                  className="flex items-center justify-center gap-1.5 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white"
-                >
-                  <LayoutDashboard className="h-4 w-4" />
-                  {t('navAdmin')}
-                </Link>
                 <button
                   onClick={() => {
                     adminLogout();

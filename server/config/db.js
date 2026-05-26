@@ -3,7 +3,9 @@ const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
 
-const dbPath = path.join(__dirname, 'db_fallback.json');
+const dbPath = process.env.VERCEL
+  ? path.join('/tmp', 'db_fallback.json')
+  : path.join(__dirname, 'db_fallback.json');
 
 // Initialize fallback JSON database if it doesn't exist
 function initFallbackDb() {
@@ -57,6 +59,9 @@ function initFallbackDb() {
           additional_notes: 'Urgent action required as monsoon is starting.',
           complaint_status: 'In Progress',
           resolution_details: null,
+          estimated_days: 7,
+          priority_score: 8.5,
+          predicted_emotion: 'Concerned',
           created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString()
         },
         {
@@ -77,6 +82,9 @@ function initFallbackDb() {
           additional_notes: 'Health hazard for kids playing in the park.',
           complaint_status: 'Pending',
           resolution_details: null,
+          estimated_days: 3,
+          priority_score: 5.0,
+          predicted_emotion: 'Frustrated',
           created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString()
         }
       ],
@@ -304,7 +312,7 @@ async function queryEmulator(sql, params = []) {
       complaint_id, user_id, complaint_title, complaint_description, 
       complaint_category, complaint_location, complaint_image, 
       name, email, phone_number, age, gender, emergency_level, 
-      additional_notes, complaint_status
+      additional_notes, complaint_status, estimated_days, priority_score, predicted_emotion
     ] = params;
 
     const newComplaint = {
@@ -325,6 +333,9 @@ async function queryEmulator(sql, params = []) {
       additional_notes: additional_notes || '',
       complaint_status: complaint_status || 'Pending',
       resolution_details: null,
+      estimated_days: estimated_days ? parseInt(estimated_days) : null,
+      priority_score: priority_score ? parseFloat(priority_score) : null,
+      predicted_emotion: predicted_emotion || 'Neutral',
       created_at: new Date().toISOString()
     };
 

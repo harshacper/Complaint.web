@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const supabase = require('../config/supabase');
 const nodemailer = require('nodemailer');
 require('dotenv').config();
 
@@ -34,11 +35,31 @@ exports.submitContactMessage = async (req, res) => {
       return res.status(400).json({ success: false, message: 'All fields are required' });
     }
 
-    // Save message to contact_messages table
-    await db.query(
-      'INSERT INTO contact_messages (name, email, subject, message) VALUES (?, ?, ?, ?)',
-      [name, email, subject, message]
-    );
+    // Save message to contact_messages table in Supabase
+    const supabaseMessage = {
+      name,
+      email: email.toLowerCase(),
+      message: `[Subject: ${subject}] ${message}`
+    };
+
+    const { data: newMsgs, error: supabaseError } = await supabase
+      .from('contact_messages')
+      .insert([supabaseMessage])
+      .select();
+
+    if (supabaseError) {
+      console.error('Supabase Contact Message Insert Error:', supabaseError);
+    }
+
+    // Also save to local database safely
+    try {
+      await db.query(
+        'INSERT INTO contact_messages (name, email, subject, message) VALUES (?, ?, ?, ?)',
+        [name, email, subject, message]
+      );
+    } catch (e) {
+      console.log('Skipped writing contact message to local fallback database:', e.message);
+    }
 
     // Send notification email to admin harshasubhash@gmail.com
     const adminEmail = process.env.ADMIN_EMAIL || 'harshasubhash@gmail.com';

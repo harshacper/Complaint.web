@@ -7,7 +7,7 @@ import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
-import { Search, MapPin, Calendar, Tag, ShieldCheck, Clock, FileText, AlertTriangle, ChevronRight } from 'lucide-react';
+import { Search, MapPin, Calendar, Tag, ShieldCheck, Clock, FileText, AlertTriangle, ChevronRight, ShieldAlert } from 'lucide-react';
 
 const statusSteps = ['Pending', 'Under Review', 'In Progress', 'Resolved'];
 
@@ -235,6 +235,41 @@ function TrackComplaintContent() {
                     <div>
                       <span className="text-[9px] font-semibold text-zinc-400 block">Exact Location</span>
                       <span className="font-semibold text-zinc-700 dark:text-zinc-300 text-xs">{complaint.complaint_location}</span>
+                    </div>
+                  </div>
+
+                  {/* ML Insights */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400 bg-indigo-50/20 dark:bg-indigo-950/10 p-3 rounded-2xl border border-indigo-200/20 dark:border-indigo-800/20">
+                      <Clock className="h-4.5 w-4.5 text-indigo-500 flex-shrink-0" />
+                      <div>
+                        <span className="text-[9px] font-semibold text-indigo-400 block">Est. Resolution Time</span>
+                        <span className="font-bold text-indigo-750 dark:text-indigo-300 text-xs">
+                          {complaint.estimated_days || 7} days
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400 bg-fuchsia-50/20 dark:bg-fuchsia-950/10 p-3 rounded-2xl border border-fuchsia-200/20 dark:border-fuchsia-800/20">
+                      <ShieldAlert className="h-4.5 w-4.5 text-fuchsia-500 flex-shrink-0" />
+                      <div>
+                        <span className="text-[9px] font-semibold text-fuchsia-400 block">AI Priority Score</span>
+                        <span className="font-bold text-fuchsia-750 dark:text-fuchsia-300 text-xs">
+                          {complaint.priority_score ? `${complaint.priority_score}/10` : '5.0/10'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400 bg-emerald-50/20 dark:bg-emerald-950/10 p-3 rounded-2xl border border-emerald-200/20 dark:border-emerald-880/20">
+                      <span className="text-base flex-shrink-0">
+                        {complaint.predicted_emotion === 'Frustrated' ? '😠' : complaint.predicted_emotion === 'Concerned' ? '😨' : '😐'}
+                      </span>
+                      <div>
+                        <span className="text-[9px] font-semibold text-emerald-400 block">AI Citizen Emotion</span>
+                        <span className="font-bold text-emerald-750 dark:text-emerald-300 text-xs">
+                          {complaint.predicted_emotion || 'Neutral'}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
